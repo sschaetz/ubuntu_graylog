@@ -1,0 +1,63 @@
+---
+
+- hosts: all
+  pre_tasks:
+    - name: install packages
+      apt:
+        name: "{{ item }}"
+        update_cache: yes
+      with_items:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - htop
+        - links2
+        - linux-image-extra-virtual
+        - software-properties-common
+        - vim
+      become: yes
+      become_method: sudo
+  tasks:
+    - name: docker extra packages
+      shell: |
+        apt-get install -y --no-install-recommends linux-image-extra-$(uname -r) 
+      become: yes
+      become_method: sudo
+    - name: docker GPG key repository
+      shell: |
+        curl -fsSL https://apt.dockerproject.org/gpg | apt-key add -
+      become: yes
+      become_method: sudo
+    - name: add stable docker repo
+      shell: |
+          add-apt-repository \
+          "deb https://apt.dockerproject.org/repo/ ubuntu-$(lsb_release -cs) main"
+      become: yes
+      become_method: sudo
+    - name: install docker
+      apt:
+          name: docker-engine
+          update_cache: yes
+      become: yes
+      become_method: sudo
+    - name: test docker is installed
+      shell: |
+        docker run hello-world
+      become: yes
+      become_method: sudo
+    - name: install docker compose
+      shell: |
+        curl -L https://github.com/docker/compose/releases/download/1.11.1/docker-compose-$(uname -s)-$(uname -m) > \
+            /usr/local/bin/docker-compose
+        chmod +x /usr/local/bin/docker-compose
+      become: yes
+      become_method: sudo
+    - name: copy docker compose file to host
+      copy:
+        src: files/docker-compose.yml
+        dest: ~/docker-compose.yml
+    - name: run docker compose to bring up the graylog containers
+      shell: |
+        docker-compose up &
+      become: yes
+      become_method: sudo

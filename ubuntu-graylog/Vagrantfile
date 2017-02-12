@@ -1,0 +1,32 @@
+$0 = File.expand_path(File.dirname(__FILE__))
+
+Vagrant.configure("2") do |config|
+  config.vm.provider "virtualbox" do |v|
+    #
+    # Set memory and CPU
+    #
+    v.memory = 4096 
+    v.cpus = 4
+  end
+
+  config.vm.define "ubuntu_graylog" do |ubuntu|
+  config.vm.network "forwarded_port", guest:9000, host: 9000 
+    
+    #
+    # Use hostname for targeting
+    #
+    ubuntu.vm.hostname = 'ubuntu-graylog'
+
+    #
+    # Use ubuntu box
+    #
+    ubuntu.vm.box = 'bento/ubuntu-16.04'
+
+    #
+    # Run Ansible from the Vagrant Host
+    #
+    ubuntu.vm.provision 'ansible' do |ansible|
+      ansible.playbook = "#{$0}/ubuntu_graylog.yml"
+    end
+  end
+end
